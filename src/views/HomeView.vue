@@ -2,13 +2,13 @@
     <div>
 
         <div style="margin: 10px 0">
-            <el-button type="primary">新增</el-button>
+            <el-button type="primary" @click="add">新增</el-button>
             <el-button>其它</el-button>
         </div>
 
         <!-- 搜索-->
         <div style="margin: 10px 0">
-            <el-input v-model="search" placeholder=" 请 输 入 关 键 字 " style="width:30%"></el-input>
+            <el-input v-model="search" placeholder="--请输入站点名称关键字查找--" style="width:30%"></el-input>
             <el-button style="margin-left: 10px" type="primary">查询</el-button>
         </div>
 
@@ -27,8 +27,36 @@
                 </template>
             </el-table-column>
         </el-table>
-    </div>
 
+
+        <!--注册站点的表单-->
+        <el-dialog title="提示" v-model="dialogVisible" width="30%">
+            <el-form :model="form" label-width="120px">
+                <el-form-item label="站点名称">
+                    <el-input v-model="form.name" style="width: 80%"></el-input>
+                </el-form-item>
+                <el-form-item label="运营商">
+                    <el-input v-model="form.operator" style="width: 80%"></el-input>
+                </el-form-item>
+                <el-form-item label="实时价格">
+                    <el-input v-model="form.price" style="width: 80%"></el-input>
+                </el-form-item>
+                <el-form-item label="总桩数目">
+                    <el-input v-model="form.totalCharger" style="width: 80%"></el-input>
+                </el-form-item>
+                <el-form-item label="位置信息">
+                    <el-input v-model="form.location" style="width: 80%"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+            <span class="dialog-footer">
+            <el-button @click="dialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="save">确 定</el-button>
+            </span>
+            </template>
+        </el-dialog>
+
+    </div>
 </template>
 
 <script>
@@ -54,13 +82,46 @@ export default {
     },
     data() {
         return {
-            tableData: []
+            tableData: [],
+            dialogVisible: false,   //标记注册表单是否可见
+            form: {}                 //记录注册表单信息
         }
     },
     created() {
         this.list();
     },
     methods: {
+        add() {     //该方法显示添加表单
+            this.form = {}; //每次清空表单
+            this.dialogVisible = true;
+        },
+        save() {
+            //该方法进行站点注册
+            request.post(
+                "/api/stations/save",
+                JSON.parse(JSON.stringify(this.form))
+            ).then(
+                res => {
+                    if (res.code === "200") {
+                        //添加成功...
+                        ElMessage({
+                            message: '添加成功',
+                            type: 'success',
+                        });
+                        //重新请求所有数据
+                        //清空本次存储的数据
+                        this.dialogVisible = false;
+                        this.list();    //更新数据
+                    } else {
+                        //弹出提示失败
+                        ElMessage.error(res.msg);
+                        //重新请求所有数据
+                        //清空本次存储的数据
+                        this.form = {};
+                    }
+                }
+            )
+        },
         list() {
             request.get("/api/stations/list").then(
                 res => {
