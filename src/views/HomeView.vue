@@ -13,10 +13,13 @@
         </div>
 
         <el-table :data="tableData" stripe style="width: 100%">
-            <el-table-column prop="date" sortable label="日期"></el-table-column>
-            <el-table-column prop="name" label="姓名"></el-table-column>
-            <el-table-column prop="address" label="地址"></el-table-column>
-
+            <el-table-column prop="id" sortable label="编号"></el-table-column>
+            <el-table-column prop="name" label="站点名称"></el-table-column>
+            <el-table-column prop="operator" label="运营商"></el-table-column>
+            <el-table-column prop="price" sortable label="实时价格"></el-table-column>
+            <el-table-column prop="availableCharger" sortable label="空闲桩数目"></el-table-column>
+            <el-table-column prop="totalCharger" label="总充电桩数目"></el-table-column>
+            <el-table-column prop="location" label="位置信息"></el-table-column>
             <el-table-column fixed="right" label="操作" width="100">
                 <template #default="scope">
                     <el-button @click="handleEdit(scope.row)" type="text">编辑</el-button>
@@ -37,6 +40,11 @@ import Header from '@/components/Header.vue'
 // 引入导航栏
 import Aside from "@/components/Aside.vue";
 
+//导入 request 工具类，发出Axios 请求
+import request from "@/utils/request";
+//导入提示消息组件
+import {ElMessage} from 'element-plus'
+
 export default {
     name: 'HomeView',
     components: {
@@ -46,22 +54,24 @@ export default {
     },
     data() {
         return {
-            tableData: [
-                {
-                    date: '2016-05-03',
-                    name: 'Tom',
-                    address: 'No. 189, Grove St, Los Angeles',
-                },
-                {
-                    date: '2016-05-02',
-                    name: 'Tom',
-                    address: 'No. 189, Grove St, Los Angeles',
-                },
-                {
-                    date: '2016-05-04',
-                    name: 'Tom',
-                    address: 'No. 189, Grove St, Los Angeles',
-                }]
+            tableData: []
+        }
+    },
+    created() {
+        this.list();
+    },
+    methods: {
+        list() {
+            request.get("/api/stations/list").then(
+                res => {
+                    if (res.code === "200") {
+                        this.tableData = res.data;
+                    } else {
+                        //弹出提示失败
+                        ElMessage.error(res.msg);
+                    }
+                }
+            )
         }
     }
 }
