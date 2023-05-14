@@ -30,7 +30,7 @@
 
 
         <!--注册站点的表单-->
-        <el-dialog title="提示" v-model="dialogVisible" width="30%">
+        <el-dialog title="注册站点" v-model="dialogVisible" width="30%">
             <el-form :model="form" label-width="120px">
                 <el-form-item label="站点名称">
                     <el-input v-model="form.name" style="width: 80%"></el-input>
@@ -52,6 +52,27 @@
             <span class="dialog-footer">
             <el-button @click="dialogVisible = false">取 消</el-button>
             <el-button type="primary" @click="save">确 定</el-button>
+            </span>
+            </template>
+        </el-dialog>
+
+        <!--更新站点的表单-->
+        <el-dialog title="更新站点信息" v-model="updateDialogVisible" width="30%">
+            <el-form :model="form" label-width="120px">
+                <el-form-item label="站点名称">
+                    <el-input v-model="form.name" style="width: 80%"></el-input>
+                </el-form-item>
+                <el-form-item label="运营商">
+                    <el-input v-model="form.operator" style="width: 80%"></el-input>
+                </el-form-item>
+                <el-form-item label="实时价格">
+                    <el-input v-model="form.price" style="width: 80%"></el-input>
+                </el-form-item>
+            </el-form>
+            <template #footer>
+            <span class="dialog-footer">
+            <el-button @click="updateDialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="update">确 定</el-button>
             </span>
             </template>
         </el-dialog>
@@ -84,13 +105,61 @@ export default {
         return {
             tableData: [],
             dialogVisible: false,   //标记注册表单是否可见
-            form: {}                 //记录注册表单信息
+            form: {},      //记录注册表单信息
+            updateDialogVisible: false, //记录更新表单是否可见
         }
     },
     created() {
         this.list();
     },
     methods: {
+        handleEdit(row) {    //该方法用于编辑站点信息
+            console.log("id:", row.id);
+            request.get(
+                "/api/stations/queryById/" + row.id
+            ).then(
+                res => {
+                    if (res.code === "200") {
+                        //重新请求所有数据
+                        //清空本次存储的数据
+                        this.form = res.data;
+                        this.updateDialogVisible = true;
+                    } else {
+                        //弹出提示失败
+                        ElMessage.error(res.msg);
+                        //重新请求所有数据
+                        //清空本次存储的数据
+                        this.form = {};
+                    }
+                }
+            )
+        },
+        update() {
+            request.put(
+                "/api/stations/update",
+                JSON.parse(JSON.stringify(this.form))
+            ).then(
+                res => {
+                    if (res.code === "200") {
+                        //添加成功...
+                        ElMessage({
+                            message: '更新成功',
+                            type: 'success',
+                        });
+                        //重新请求所有数据
+                        //清空本次存储的数据
+                        this.updateDialogVisible = false;
+                        this.list();    //更新数据
+                    } else {
+                        //弹出提示失败
+                        ElMessage.error(res.msg);
+                        //重新请求所有数据
+                        //清空本次存储的数据
+                        this.form = {};
+                    }
+                }
+            )
+        },
         add() {     //该方法显示添加表单
             this.form = {}; //每次清空表单
             this.dialogVisible = true;
