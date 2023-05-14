@@ -3,7 +3,7 @@
              label-width="0px" v-loading="loading">
         <h3 class="login_title">系统登录</h3>
         <el-form-item prop="account">
-            <el-input type="text" v-model="loginForm.username" auto-complete="off" placeholder="账号"></el-input>
+            <el-input type="text" v-model="loginForm.name" auto-complete="off" placeholder="账号"></el-input>
         </el-form-item>
         <el-form-item prop="checkPass">
             <el-input type="password" v-model="loginForm.password" auto-complete="off" placeholder="密码"></el-input>
@@ -16,8 +16,14 @@
 </template>
 
 <script>
-export default{
-    data(){
+
+//导入 request 工具类，发出Axios 请求
+import request from "@/utils/request";
+//导入提示消息组件
+import {ElMessage} from 'element-plus'
+
+export default {
+    data() {
         return {
             rules: {
                 account: [{required: true, message: '请输入用户名', trigger: 'blur'}],
@@ -25,13 +31,33 @@ export default{
             },
             checked: true,
             loginForm: {
-                username: 'Jools_He',
+                name: 'Jools_He',
                 password: 'hzx'
             },
             loading: false
         }
     },
     methods: {
+        submitClick() {
+            //发送请求登录
+            request.post(
+                "/api/admin/login",
+                JSON.parse(JSON.stringify(this.loginForm))
+            ).then(
+                res => {
+                    if (res.code === "200") {
+                        ElMessage({
+                            message: '登录成功',
+                            type: 'success',
+                        });
+                        this.$router.replace({path: '/home'});
+                    } else {
+                        //弹出提示失败
+                        ElMessage.error(res.msg);
+                    }
+                }
+            )
+        }
     }
 }
 </script>
