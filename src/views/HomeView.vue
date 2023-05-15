@@ -39,8 +39,8 @@
             <el-form :model="form" :rules="rules" ref="form" label-width="120px">
                 <el-form-item label="站点名称" prop="name">
                     <el-input v-model="form.name" style="width: 80%" @blur="validName"></el-input>
-<!--                    提示站点名称信息是否唯一-->
-                    {{this.validMsg.name}}
+                    <!--提示站点名称信息是否唯一-->
+                    {{ this.validMsg.name }}
                 </el-form-item>
                 <el-form-item label="运营商" prop="operator">
                     <el-input v-model="form.operator" style="width: 80%"></el-input>
@@ -65,14 +65,16 @@
 
         <!--更新站点的表单-->
         <el-dialog title="更新站点信息" v-model="updateDialogVisible" width="30%">
-            <el-form :model="form" label-width="120px">
-                <el-form-item label="站点名称">
+            <el-form :model="form" :rules="rules" ref="form" label-width="120px">
+                <el-form-item label="站点名称" prop="name">
                     <el-input v-model="form.name" style="width: 80%"></el-input>
+                    <!--提示站点名称信息是否唯一-->
+                    {{ this.validMsg.name }}
                 </el-form-item>
-                <el-form-item label="运营商">
+                <el-form-item label="运营商" prop="operator">
                     <el-input v-model="form.operator" style="width: 80%"></el-input>
                 </el-form-item>
-                <el-form-item label="实时价格">
+                <el-form-item label="实时价格" prop="price">
                     <el-input v-model="form.price" style="width: 80%"></el-input>
                 </el-form-item>
             </el-form>
@@ -197,7 +199,6 @@ export default {
             )
         },
         handleEdit(row) {    //该方法用于编辑站点信息
-            // console.log("id:", row.id);
             request.get(
                 "/api/stations/queryById/" + row.id
             ).then(
@@ -206,6 +207,7 @@ export default {
                         //重新请求所有数据
                         //清空本次存储的数据
                         this.form = res.data;
+                        //将上次验证消息，清空
                         this.updateDialogVisible = true;
                     } else {
                         //弹出提示失败
@@ -215,33 +217,44 @@ export default {
                         this.form = {};
                     }
                 }
-            )
+            );
+            this.$refs['form'].resetFields();
         },
         update() {
-            request.put(
-                "/api/stations/update",
-                JSON.parse(JSON.stringify(this.form))
-            ).then(
-                res => {
-                    if (res.code === "200") {
-                        //添加成功...
-                        ElMessage({
-                            message: '更新成功',
-                            type: 'success',
-                        });
-                        //重新请求所有数据
-                        //清空本次存储的数据
-                        this.updateDialogVisible = false;
-                        this.list();    //更新数据
-                    } else {
-                        //弹出提示失败
-                        ElMessage.error(res.msg);
-                        //重新请求所有数据
-                        //清空本次存储的数据
-                        this.form = {};
-                    }
+            this.$refs['form'].validate((valid) => {
+                if (valid && (this.validMsg.name === "")) {
+                    request.put(
+                        "/api/stations/update",
+                        JSON.parse(JSON.stringify(this.form))
+                    ).then(
+                        res => {
+                            if (res.code === "200") {
+                                //添加成功...
+                                ElMessage({
+                                    message: '更新成功',
+                                    type: 'success',
+                                });
+                                //重新请求所有数据
+                                //清空本次存储的数据
+                                this.updateDialogVisible = false;
+                                this.list();    //更新数据
+                            } else {
+                                //弹出提示失败
+                                ElMessage.error(res.msg);
+                                //重新请求所有数据
+                                //清空本次存储的数据
+                                this.form = {};
+                            }
+                        }
+                    )
+                } else {
+                    //弹出提示失败
+                    ElMessage.error("表单信息输入有误");
+                    //重新请求所有数据
+                    //清空本次存储的数据
+                    return false;
                 }
-            )
+            })
         },
         add() {     //该方法显示添加表单
             this.form = {}; //每次清空表单
