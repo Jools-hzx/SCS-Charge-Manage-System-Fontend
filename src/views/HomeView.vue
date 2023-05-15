@@ -20,10 +20,15 @@
             <el-table-column prop="availableCharger" sortable label="空闲桩数目"></el-table-column>
             <el-table-column prop="totalCharger" label="总充电桩数目"></el-table-column>
             <el-table-column prop="location" label="位置信息"></el-table-column>
-            <el-table-column fixed="right" label="操作" width="100">
+            <el-table-column fixed="right" label="操作" width="120">
                 <template #default="scope">
                     <el-button @click="handleEdit(scope.row)" type="text">编辑</el-button>
-                    <el-button type="text">删除</el-button>
+                    <!-- 增加 popcomfirm 控件，确认删除 -->
+                    <el-popconfirm title="确定删除吗？" @confirm="handleDel(scope.row.id)">
+                        <template #reference>
+                            <el-button size="small" type="danger">删除</el-button>
+                        </template>
+                    </el-popconfirm>
                 </template>
             </el-table-column>
         </el-table>
@@ -113,8 +118,29 @@ export default {
         this.list();
     },
     methods: {
+        handleDel(id) {
+            console.log("待删除的站点 id:", id);
+            request.delete("/api/stations/del/" + id).then(
+                res => {
+                    if (res.code === "200") {
+                        //添加成功...
+                        ElMessage({
+                            message: '删除成功',
+                            type: 'success',
+                        });
+                        //重新请求所有数据
+                        this.list();    //更新数据
+                    } else {
+                        //弹出提示失败
+                        ElMessage.error(res.msg);
+                        //重新请求所有数据
+                        this.list();
+                    }
+                }
+            )
+        },
         handleEdit(row) {    //该方法用于编辑站点信息
-            console.log("id:", row.id);
+            // console.log("id:", row.id);
             request.get(
                 "/api/stations/queryById/" + row.id
             ).then(
