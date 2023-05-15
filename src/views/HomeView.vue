@@ -36,20 +36,22 @@
 
         <!--注册站点的表单-->
         <el-dialog title="注册站点" v-model="dialogVisible" width="30%">
-            <el-form :model="form" label-width="120px">
-                <el-form-item label="站点名称">
-                    <el-input v-model="form.name" style="width: 80%"></el-input>
+            <el-form :model="form" :rules="rules" ref="form" label-width="120px">
+                <el-form-item label="站点名称" prop="name">
+                    <el-input v-model="form.name" style="width: 80%" @blur="validName"></el-input>
+<!--                    提示站点名称信息是否唯一-->
+                    {{this.validMsg.name}}
                 </el-form-item>
-                <el-form-item label="运营商">
+                <el-form-item label="运营商" prop="operator">
                     <el-input v-model="form.operator" style="width: 80%"></el-input>
                 </el-form-item>
-                <el-form-item label="实时价格">
+                <el-form-item label="实时价格" prop="price">
                     <el-input v-model="form.price" style="width: 80%"></el-input>
                 </el-form-item>
-                <el-form-item label="总桩数目">
+                <el-form-item label="总桩数目" prop="totalCharger">
                     <el-input v-model="form.totalCharger" style="width: 80%"></el-input>
                 </el-form-item>
-                <el-form-item label="位置信息">
+                <el-form-item label="位置信息" prop="location">
                     <el-input v-model="form.location" style="width: 80%"></el-input>
                 </el-form-item>
             </el-form>
@@ -126,13 +128,45 @@ export default {
             pageSize: 6,    //页面显示的数据量
             currentPage: 1, //当前显示的页码
             total: 0,    //动态获取
-            search: ""
+            search: "",
+            validMsg: {},
+            rules: {
+                name: [{required: true, message: '请输入称站点名称', trigger: 'blur'}],
+                operator: [{required: true, message: '请输入运营商', trigger: 'blur'}],
+                price: [{required: true, message: '请输入价格', trigger: 'blur'}, {
+                    pattern: /^(([1-9]\d*)|(0))(\.\d+)?$/,
+                    message: '请输入数字',
+                    trigger: 'blur'
+                }],
+                totalCharger: [{required: true, message: '请输入销量', trigger: 'blur'}, {
+                    pattern: /^(([1-9]\d*)|(0))$/,
+                    message: '请输入数字',
+                    trigger: 'blur'
+                }],
+                location: [{required: true, message: '请输入位置信息', trigger: 'blur'}]
+            }
+
         }
     },
     created() {
         this.list();
     },
     methods: {
+        validName() {
+            console.log("name:", this.form.name);
+            request.get("/api/stations/nameValid/" + this.form.name).then(
+                res => {
+                    if (res.code === "200" && res.data === "invalid") {
+                        this.validMsg.name = "名称已经存在，请重新输入"
+                    } else if (res.code === "200" && res.data === "valid") {
+                        //如果站点名称合法，则清楚验证信息
+                        this.validMsg.name = ""
+                    } else {
+                        ElMessage.error("网络连接错误");
+                    }
+                }
+            )
+        },
         handlePageSizeChange(pageSize) {
             this.pageSize = pageSize;
             this.list();
@@ -212,33 +246,48 @@ export default {
         add() {     //该方法显示添加表单
             this.form = {}; //每次清空表单
             this.dialogVisible = true;
+            //将上传验证消息，清空
+            this.$refs['form'].resetFields();
+            this.validMsg.name = "";
         },
         save() {
-            //该方法进行站点注册
-            request.post(
-                "/api/stations/save",
-                JSON.parse(JSON.stringify(this.form))
-            ).then(
-                res => {
-                    if (res.code === "200") {
-                        //添加成功...
-                        ElMessage({
-                            message: '添加成功',
-                            type: 'success',
-                        });
-                        //重新请求所有数据
-                        //清空本次存储的数据
-                        this.dialogVisible = false;
-                        this.list();    //更新数据
-                    } else {
-                        //弹出提示失败
-                        ElMessage.error(res.msg);
-                        //重新请求所有数据
-                        //清空本次存储的数据
-                        this.form = {};
-                    }
+            this.$refs['form'].validate((valid) => {
+                if (valid && (this.validMsg.name === "")) {
+                    //如果表单信息验证通过并且站点名称不重复
+                    //该方法进行站点注册
+                    request.post(
+                        "/api/stations/save",
+                        JSON.parse(JSON.stringify(this.form))
+                    ).then(
+                        res => {
+                            if (res.code === "200") {
+                                //添加成功...
+                                ElMessage({
+                                    message: '添加成功',
+                                    type: 'success',
+                                });
+                                //重新请求所有数据
+                                //清空本次存储的数据
+                                this.dialogVisible = false;
+                                this.list();    //更新数据
+                            } else {
+                                //弹出提示失败
+                                ElMessage.error(res.msg);
+                                //重新请求所有数据
+                                //清空本次存储的数据
+                                this.form = {};
+                            }
+                        }
+                    )
+                } else {
+                    //弹出提示失败
+                    ElMessage.error("表单信息输入有误");
+                    //重新请求所有数据
+                    //清空本次存储的数据
+                    this.form = {};
+                    return false;
                 }
-            )
+            })
         },
         list() {
             // request.get("/api/stations/list").then(
