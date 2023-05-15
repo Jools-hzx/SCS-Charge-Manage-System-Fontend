@@ -82,6 +82,17 @@
             </template>
         </el-dialog>
 
+        <!-- 分页控件 -->
+        <div style="margin: 10px 0">
+            <el-pagination
+                    @size-change="handlePageSizeChange" @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[6,10]"
+                    :page-size="pageSize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="total">
+            </el-pagination>
+        </div>
     </div>
 </template>
 
@@ -112,12 +123,23 @@ export default {
             dialogVisible: false,   //标记注册表单是否可见
             form: {},      //记录注册表单信息
             updateDialogVisible: false, //记录更新表单是否可见
+            pageSize: 6,    //页面显示的数据量
+            currentPage: 1, //当前显示的页码
+            total: 0    //动态获取
         }
     },
     created() {
         this.list();
     },
     methods: {
+        handlePageSizeChange(pageSize) {
+            this.pageSize = pageSize;
+            this.list();
+        },
+        handleCurrentChange(pageNum) {
+            this.currentPage = pageNum;
+            this.list();
+        },
         handleDel(id) {
             console.log("待删除的站点 id:", id);
             request.delete("/api/stations/del/" + id).then(
@@ -218,10 +240,30 @@ export default {
             )
         },
         list() {
-            request.get("/api/stations/list").then(
+            // request.get("/api/stations/list").then(
+            //     res => {
+            //         if (res.code === "200") {
+            //             this.tableData = res.data;
+            //         } else {
+            //             //弹出提示失败
+            //             ElMessage.error(res.msg);
+            //         }
+            //     }
+            // )
+
+            request.get(
+                "/api/stations/listByPage",
+                {
+                    params: {
+                        "pageNum": this.currentPage,
+                        "pageSize": this.pageSize
+                    }
+                }
+            ).then(
                 res => {
                     if (res.code === "200") {
-                        this.tableData = res.data;
+                        this.tableData = res.data.records;
+                        this.total = res.data.total;
                     } else {
                         //弹出提示失败
                         ElMessage.error(res.msg);
