@@ -9,7 +9,7 @@
         <!-- 搜索-->
         <div style="margin: 10px 0">
             <el-input v-model="search" placeholder="--请输入站点名称关键字查找--" style="width:30%"></el-input>
-            <el-button style="margin-left: 10px" type="primary">查询</el-button>
+            <el-button style="margin-left: 10px" type="primary" @click="list">查询</el-button>
         </div>
 
         <el-table :data="tableData" stripe style="width: 100%">
@@ -125,7 +125,8 @@ export default {
             updateDialogVisible: false, //记录更新表单是否可见
             pageSize: 6,    //页面显示的数据量
             currentPage: 1, //当前显示的页码
-            total: 0    //动态获取
+            total: 0,    //动态获取
+            search: ""
         }
     },
     created() {
@@ -256,7 +257,8 @@ export default {
                 {
                     params: {
                         "pageNum": this.currentPage,
-                        "pageSize": this.pageSize
+                        "pageSize": this.pageSize,
+                        "search": this.search
                     }
                 }
             ).then(
