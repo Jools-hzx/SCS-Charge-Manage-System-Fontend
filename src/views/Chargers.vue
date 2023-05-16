@@ -25,7 +25,11 @@
             <el-table-column fixed="right" label="操作" width="150">
                 <template #default="scope">
                     <el-button @click="handleEdit(scope.row)" type="text">更新状态</el-button>
-                    <el-button type="text">删除</el-button>
+                    <el-popconfirm title="确定删除吗？" @confirm="handleDel(scope.row.id)">
+                        <template #reference>
+                            <el-button size="small" type="danger">删除</el-button>
+                        </template>
+                    </el-popconfirm>
                 </template>
             </el-table-column>
         </el-table>
@@ -125,8 +129,30 @@ export default {
         this.list();
     },
     methods: {
+        handleDel(id) {
+            // console.log("id:", id);
+            //发送请求删除 charger
+            request.delete("/api/chargers/delCharger/" + id).then(
+                res => {
+                    if (res.code === "200") {
+                        //删除成功....
+                        ElMessage({
+                            message: '删除成功',
+                            type: 'success',
+                        });
+                        //重新请求所有数据
+                        this.list();    //更新数据
+                    } else {
+                        //弹出提示失败
+                        ElMessage.error(res.msg);
+                        //重新请求所有数据
+                        this.list();
+                    }
+                }
+            )
+        },
         handleEdit(row) {
-            console.log("id:", row.id);
+            // console.log("id:", row.id);
             //发送请求回显数据
             request.get("/api/chargers/queryById/" + row.id).then(
                 res => {
