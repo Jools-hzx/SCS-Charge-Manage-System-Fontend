@@ -222,7 +222,7 @@ export default {
         },
         update() {
             this.$refs['form'].validate((valid) => {
-                if (valid && (this.validMsg.name === "")) {
+                if (valid) {
                     request.put(
                         "/api/stations/update",
                         JSON.parse(JSON.stringify(this.form))

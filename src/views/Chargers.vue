@@ -6,23 +6,41 @@
             <el-button>其它</el-button>
         </div>
 
-        <!-- 搜索-->
+        <!-- 搜索 By Charger Id-->
         <div style="margin: 10px 0">
-            <el-input v-model="search" placeholder="--请输入充电桩ID查找--" style="width:30%"></el-input>
-            <el-button style="margin-left: 10px" type="primary">查询</el-button>
+            <el-input v-model="chargerId" placeholder="--请输入充电桩ID查找--" style="width:30%"></el-input>
+            <el-button style="margin-left: 10px" type="primary" @click="list">查询</el-button>
+        </div>
+
+        <!-- 搜索 By Station Id-->
+        <div style="margin: 10px 0">
+            <el-input v-model="stationId" placeholder="--请输入站点ID查找--" style="width:30%"></el-input>
+            <el-button style="margin-left: 10px" type="primary" @click="list">查询</el-button>
         </div>
 
         <el-table :data="tableData" stripe style="width: 100%">
             <el-table-column prop="id" sortable label="编号"></el-table-column>
             <el-table-column prop="status" label="状态"></el-table-column>
             <el-table-column prop="stationId" label="站点Id"></el-table-column>
-            <el-table-column fixed="right" label="操作" width="100">
+            <el-table-column fixed="right" label="操作" width="150">
                 <template #default="scope">
-                    <el-button @click="handleEdit(scope.row)" type="text">编辑</el-button>
+                    <el-button @click="handleEdit(scope.row)" type="text">更新状态</el-button>
                     <el-button type="text">删除</el-button>
                 </template>
             </el-table-column>
         </el-table>
+
+        <!-- 分页控件 -->
+        <div style="margin: 10px 0">
+            <el-pagination
+                @size-change="handlePageSizeChange" @current-change="handleCurrentChange"
+                :current-page="currentPage"
+                :page-sizes="[8, 12]"
+                :page-size="pageSize"
+                layout="total, sizes, prev, pager, next, jumper"
+                :total="total">
+            </el-pagination>
+        </div>
     </div>
 
 </template>
@@ -50,18 +68,42 @@ export default {
     },
     data() {
         return {
-            tableData: []
+            tableData: [],
+            pageSize: 8,
+            currentPage: 1,
+            total: 0,
+            chargerId: "",
+            stationId: ""
         }
     },
     created() {
         this.list();
     },
     methods: {
+        handlePageSizeChange(pageSize) {
+            this.pageSize = pageSize;
+            this.list();
+        },
+        handleCurrentChange(pageNum) {
+            this.currentPage = pageNum;
+            this.list();
+        },
         list() {
-            request.get("/api/chargers/list").then(
+            request.get(
+                "/api/chargers/queryPage",
+                {
+                    params: {
+                        "pageNum": this.currentPage,
+                        "pageSize": this.pageSize,
+                        "chargerId": this.chargerId,
+                        "stationId": this.stationId
+                    }
+                }
+            ).then(
                 res => {
                     if (res.code === "200") {
-                        this.tableData = res.data;
+                        this.tableData = res.data.records;
+                        this.total = res.data.total;
                         //获取到数据后动态的显示状态
                         this.showStatus();
                     } else {
