@@ -30,15 +30,44 @@
             </el-table-column>
         </el-table>
 
+
+        <!--更新charger状态的表单-->
+        <el-dialog title="更新站点信息" v-model="updateDialogVisible" width="30%">
+            <el-form :model="form" :rules="rules" ref="form" label-width="120px">
+                <el-form-item label="ChargerId" prop="id" v-model="form.id">
+                    : {{ form.id }}
+                </el-form-item>
+                <el-form-item label="新状态" prop="status">
+                    <el-select v-model="form.status" class="m-2" size="small">
+                        <el-option
+                                v-for="item in options"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value"
+                        />
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="站点Id" prop="stationId" v-model="form.stationId">
+                    : {{ form.stationId }}
+                </el-form-item>
+            </el-form>
+            <template #footer>
+            <span class="dialog-footer">
+            <el-button @click="updateDialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="update">确 定</el-button>
+            </span>
+            </template>
+        </el-dialog>
+
         <!-- 分页控件 -->
         <div style="margin: 10px 0">
             <el-pagination
-                @size-change="handlePageSizeChange" @current-change="handleCurrentChange"
-                :current-page="currentPage"
-                :page-sizes="[8, 12]"
-                :page-size="pageSize"
-                layout="total, sizes, prev, pager, next, jumper"
-                :total="total">
+                    @size-change="handlePageSizeChange" @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[8, 12]"
+                    :page-size="pageSize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="total">
             </el-pagination>
         </div>
     </div>
@@ -73,13 +102,80 @@ export default {
             currentPage: 1,
             total: 0,
             chargerId: "",
-            stationId: ""
+            stationId: "",
+            form: {},
+            updateDialogVisible: false,
+            options: [
+                {
+                    value: '0',
+                    label: '空闲中',
+                },
+                {
+                    value: '1',
+                    label: '占用中',
+                },
+                {
+                    value: '2',
+                    label: '故障中',
+                }
+            ]
         }
     },
     created() {
         this.list();
     },
     methods: {
+        handleEdit(row) {
+            console.log("id:", row.id);
+            //发送请求回显数据
+            request.get("/api/chargers/queryById/" + row.id).then(
+                res => {
+                    if (res.code === "200") {
+                        //重新请求所有数据
+                        //清空本次存储的数据
+                        this.form = res.data;
+                        //根据状态数字显示状态文本信息
+                        this.form.status = this.getStatusText(this.form.status);
+                        //将上次验证消息，清空
+                        this.updateDialogVisible = true;
+                    } else {
+                        //弹出提示失败
+                        ElMessage.error(res.msg);
+                        //重新请求所有数据
+                        //清空本次存储的数据
+                        this.form = {};
+                    }
+                }
+            )
+        },
+        update() {  //执行更新操作
+            // console.log("form:", this.form);
+            request.put(
+                "/api/chargers/updateStatus",
+                JSON.parse(JSON.stringify(this.form))
+            ).then(
+                res => {
+                    if (res.code === "200") {
+                        //添加成功...
+                        ElMessage({
+                            message: '更新状态成功',
+                            type: 'success',
+                        });
+                        //重新请求所有数据
+                        //清空本次存储的数据
+                        this.updateDialogVisible = false;
+                        this.list();    //更新数据
+                        this.form = {}; //清空提交的信息表单中的数据
+                    } else {
+                        //弹出提示失败
+                        ElMessage.error(res.msg);
+                        //重新请求所有数据
+                        //清空本次存储的数据
+                        this.form = {};
+                    }
+                }
+            )
+        },
         handlePageSizeChange(pageSize) {
             this.pageSize = pageSize;
             this.list();
@@ -120,7 +216,7 @@ export default {
                 case 1:
                     return '占用中[用户不可选]';
                 case 2:
-                    return '故障[用户不可选]';
+                    return '故障中[用户不可选]';
                 default:
                     return '未知状态';
             }
@@ -128,7 +224,7 @@ export default {
         showStatus() {
             this.tableData.forEach(item => {
                 item.status = this.getStatusText(item.status);
-                console.log("status:", item.status);
+                // console.log("status:", item.status);
             })
         }
     }

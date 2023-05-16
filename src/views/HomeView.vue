@@ -140,7 +140,7 @@ export default {
                     message: '请输入数字',
                     trigger: 'blur'
                 }],
-                totalCharger: [{required: true, message: '请输入销量', trigger: 'blur'}, {
+                totalCharger: [{required: true, message: '请输入数字', trigger: 'blur'}, {
                     pattern: /^(([1-9]\d*)|(0))$/,
                     message: '请输入数字',
                     trigger: 'blur'
@@ -286,6 +286,7 @@ export default {
                             } else {
                                 //弹出提示失败
                                 ElMessage.error(res.msg);
+                                console.log("errors:", res)
                                 //重新请求所有数据
                                 //清空本次存储的数据
                                 this.form = {};
