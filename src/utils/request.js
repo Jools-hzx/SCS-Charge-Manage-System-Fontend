@@ -1,7 +1,8 @@
 import axios from 'axios' //通过 axios 创建对象
 
 const request = axios.create({
-    timeout: 5000
+    timeout: 5000,
+    baseURL: 'http://localhost:10000' // 设置基础URL
 })
 
 //request 拦截器
@@ -23,6 +24,12 @@ request.interceptors.request.use(
 request.interceptors.response.use(
     response => {
         let res = response.data;
+        //如果服务端拦截到未登录请求，跳转到登陆页面
+        console.log("res.redirect:", res.redirect);
+        if (res.redirect === '/') {
+            // 重定向到"http://localhost:10000/"
+            window.location.href = 'http://localhost:10000/';
+        }
         //如果返回得是文件
         if (response.config.responseType === 'blob') {
             return res;

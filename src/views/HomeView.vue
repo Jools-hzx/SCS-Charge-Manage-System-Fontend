@@ -318,6 +318,7 @@ export default {
             request.get(
                 "/api/stations/listByPage",
                 {
+                    withCredentials: true,
                     params: {
                         "pageNum": this.currentPage,
                         "pageSize": this.pageSize,
