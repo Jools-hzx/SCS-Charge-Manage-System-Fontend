@@ -58,7 +58,7 @@ import request from "@/utils/request";
 import {ElMessage} from 'element-plus'
 
 export default {
-    name: 'HomeView',
+    name: 'ManageUsersView',
     components: {
         // HelloWorld
         Header,
